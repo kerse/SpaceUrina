@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Показатели МКС: Ёмкость и сигнал</title>
+  <title>Детальные логи Lightstreamer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -36,40 +36,62 @@
 </head>
 <body>
   <div class="container">
-    <h1>Показатели МКС</h1>
+    <h1>Детальные логи Lightstreamer</h1>
     <div id="value">Загрузка данных...</div>
     <div id="signal">Сигнал: неизвестен</div>
   </div>
 
   <script>
-    // Инициализация клиента с использованием защищённого WebSocket-соединения и завершающего слэша.
+    // Функция для логирования событий
+    function logEvent(eventName, data) {
+      console.log("[" + new Date().toLocaleTimeString() + "] " + eventName + ": ", data);
+    }
+
+    // Инициализация Lightstreamer клиента.
+    // Обратите внимание: используется защищённое WebSocket-соединение с завершающим слэшем.
     var client = new LightstreamerClient("wss://push.lightstreamer.com/", "ISSLIVE");
 
-    // Диагностический слушатель для отслеживания статуса клиента.
+    // Добавляем диагностический слушатель для клиента
     client.addListener({
       onStatusChange: function(status) {
-        console.log("Клиентский статус: " + status);
+        logEvent("Client onStatusChange", status);
       },
       onServerError: function(code, message) {
-        console.error("Ошибка сервера: " + code + " " + message);
+        logEvent("Client onServerError", { code: code, message: message });
+      },
+      // Если есть другие события, их можно добавить здесь
+      onLockdown: function() {
+        logEvent("Client onLockdown", "Lockdown event triggered");
       }
     });
-
+    logEvent("Client connecting", "");
     client.connect();
 
     // Подписка для обновлений ёмкости (NODE3000005)
     var pissTankSub = new Subscription("MERGE", ["NODE3000005"], ["Value", "Status", "TimeStamp"]);
     pissTankSub.addListener({
       onSubscribe: function() {
-        console.log("Подписка на NODE3000005 началась");
+        logEvent("pissTankSub onSubscribe", "Subscribed to NODE3000005");
+      },
+      onUnsubscribe: function() {
+        logEvent("pissTankSub onUnsubscribe", "Unsubscribed from NODE3000005");
+      },
+      onListenStart: function() {
+        logEvent("pissTankSub onListenStart", "Listener started for NODE3000005");
+      },
+      onListenEnd: function() {
+        logEvent("pissTankSub onListenEnd", "Listener ended for NODE3000005");
       },
       onItemUpdate: function(update) {
         var value = update.getValue("Value");
-        console.log("Получено обновление ёмкости: " + value);
+        logEvent("pissTankSub onItemUpdate", value);
         document.getElementById("value").textContent = value + "%";
       },
       onItemLostUpdates: function(itemName, lostUpdates) {
-        console.warn("Потеря обновлений для " + itemName + ": " + lostUpdates);
+        logEvent("pissTankSub onItemLostUpdates", { itemName: itemName, lostUpdates: lostUpdates });
+      },
+      onClearSnapshot: function(itemName, itemPos) {
+        logEvent("pissTankSub onClearSnapshot", { itemName: itemName, itemPos: itemPos });
       }
     });
     client.subscribe(pissTankSub);
@@ -78,13 +100,28 @@
     var signalSub = new Subscription("MERGE", ["TIME_000001"], ["TimeStamp", "Status.Class", "Status"]);
     signalSub.addListener({
       onSubscribe: function() {
-        console.log("Подписка на TIME_000001 началась");
+        logEvent("signalSub onSubscribe", "Subscribed to TIME_000001");
+      },
+      onUnsubscribe: function() {
+        logEvent("signalSub onUnsubscribe", "Unsubscribed from TIME_000001");
+      },
+      onListenStart: function() {
+        logEvent("signalSub onListenStart", "Listener started for TIME_000001");
+      },
+      onListenEnd: function() {
+        logEvent("signalSub onListenEnd", "Listener ended for TIME_000001");
       },
       onItemUpdate: function(update) {
         var statusClass = update.getValue("Status.Class");
-        console.log("Получено обновление сигнала: " + statusClass);
+        logEvent("signalSub onItemUpdate", statusClass);
         var hasSignal = (statusClass === "24");
         document.getElementById("signal").textContent = "Сигнал: " + (hasSignal ? "есть" : "нет");
+      },
+      onItemLostUpdates: function(itemName, lostUpdates) {
+        logEvent("signalSub onItemLostUpdates", { itemName: itemName, lostUpdates: lostUpdates });
+      },
+      onClearSnapshot: function(itemName, itemPos) {
+        logEvent("signalSub onClearSnapshot", { itemName: itemName, itemPos: itemPos });
       }
     });
     client.subscribe(signalSub);
