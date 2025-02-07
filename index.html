@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Телеметрия МКС: Заполненность ёмкости для урины</title>
+  <title>Показатели МКС: Ёмкость и сигнал</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,50 +25,80 @@
       font-size: 48px;
       color: #007BFF;
     }
+    #signal {
+      font-size: 24px;
+      color: #555;
+      margin-top: 10px;
+    }
   </style>
-  <!-- Подключаем UMD-сборку Lightstreamer Client -->
+  <!-- Подключаем UMD-сборку Lightstreamer Client Web -->
   <script src="https://unpkg.com/lightstreamer-client-web/lightstreamer.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Заполненность ёмкости для урины UPA [%]</h1>
-    <div id="value">Загрузка...</div>
+    <h1>Показатели МКС</h1>
+    <div id="value">Загрузка данных...</div>
+    <div id="signal">Сигнал: неизвестен</div>
   </div>
 
   <script>
-    // Используем защищённый URL с завершающим слэшем
-    var client = new LightstreamerClient("wss://push.lightstreamer.com/", "ISS");
+    // Инициализация Lightstreamer клиента.
+    // В Swift‑коде использовался сервер "https://push.lightstreamer.com" и адаптер "ISSLIVE".
+    // Для JS‑клиента используем защищённое WebSocket‑соединение (wss) с завершающим слэшем.
+    var client = new LightstreamerClient("wss://push.lightstreamer.com/", "ISSLIVE");
 
-    // Добавляем диагностические слушатели
+    // Добавляем диагностический слушатель для отслеживания статуса клиента.
     client.addListener({
       onStatusChange: function(status) {
-        console.log("Client status: " + status);
+        console.log("Клиентский статус: " + status);
       },
       onServerError: function(code, message) {
-        console.error("Server error:", code, message);
+        console.error("Ошибка сервера: " + code + " " + message);
       }
     });
 
+    // Устанавливаем соединение.
     client.connect();
 
-    // Создаем подписку на параметр NODE3000005
-    var subscription = new Subscription("MERGE", "ISS_MET", ["NODE3000005"]);
-
-    subscription.addListener({
+    // --- Подписка для обновлений ёмкости (NODE3000005) ---
+    // Поля: "Value", "Status", "TimeStamp"
+    var pissTankSub = new Subscription("MERGE", ["NODE3000005"], ["Value", "Status", "TimeStamp"]);
+    pissTankSub.addListener({
+      onSubscribe: function() {
+        console.log("Подписка на NODE3000005 началась");
+      },
+      onUnsubscribe: function() {
+        console.log("Отписка от NODE3000005");
+      },
       onItemUpdate: function(update) {
-        var value = update.getValue("NODE3000005");
-        console.log("Получено обновление: " + value);
+        // Получаем значение из поля "Value"
+        var value = update.getValue("Value");
+        console.log("Обновление ёмкости: " + value);
         document.getElementById("value").textContent = value + "%";
       },
-      onListenStart: function() {
-        console.log("Подписка началась");
-      },
-      onListenEnd: function() {
-        console.log("Подписка завершена");
+      onItemLostUpdates: function(itemName, lostUpdates) {
+        console.warn("Потеря обновлений для " + itemName + ": " + lostUpdates);
       }
     });
+    client.subscribe(pissTankSub);
 
-    client.subscribe(subscription);
+    // --- Подписка для обновлений сигнала (TIME_000001) ---
+    // Поля: "TimeStamp", "Status.Class", "Status"
+    var signalSub = new Subscription("MERGE", ["TIME_000001"], ["TimeStamp", "Status.Class", "Status"]);
+    signalSub.addListener({
+      onSubscribe: function() {
+        console.log("Подписка на TIME_000001 началась");
+      },
+      onItemUpdate: function(update) {
+        // Получаем значение из поля "Status.Class"
+        var statusClass = update.getValue("Status.Class");
+        console.log("Обновление сигнала: " + statusClass);
+        // В Swift‑коде сигнал считается активным, если status равен "24"
+        var hasSignal = (statusClass === "24");
+        document.getElementById("signal").textContent = "Сигнал: " + (hasSignal ? "есть" : "нет");
+      }
+    });
+    client.subscribe(signalSub);
   </script>
 </body>
 </html>
