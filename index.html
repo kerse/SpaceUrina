@@ -42,26 +42,21 @@
   </div>
 
   <script>
-    // Функция для логирования событий
+    // Функция для логирования событий с отметкой времени
     function logEvent(eventName, data) {
       console.log("[" + new Date().toLocaleTimeString() + "] " + eventName + ": ", data);
     }
 
-    // Инициализация Lightstreamer клиента.
-    // Обратите внимание: используется защищённое WebSocket-соединение с завершающим слэшем.
-    var client = new LightstreamerClient("wss://push.lightstreamer.com/", "ISSLIVE");
+    // Используем корректный адрес: сервер указан в виде HTTPS-URL.
+    var client = new LightstreamerClient("https://push.lightstreamer.com", "ISSLIVE");
 
-    // Добавляем диагностический слушатель для клиента
+    // Добавляем диагностические слушатели для клиента
     client.addListener({
       onStatusChange: function(status) {
         logEvent("Client onStatusChange", status);
       },
       onServerError: function(code, message) {
         logEvent("Client onServerError", { code: code, message: message });
-      },
-      // Если есть другие события, их можно добавить здесь
-      onLockdown: function() {
-        logEvent("Client onLockdown", "Lockdown event triggered");
       }
     });
     logEvent("Client connecting", "");
