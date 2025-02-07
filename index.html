@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Телеметрия МКС: Заполненность ёмкости для урины</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      text-align: center;
+      padding-top: 50px;
+    }
+    .container {
+      display: inline-block;
+      background: #fff;
+      padding: 20px 40px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    #value {
+      font-size: 48px;
+      color: #007BFF;
+    }
+  </style>
+  <!-- Обновлённая ссылка на Lightstreamer библиотеку -->
+  <script src="https://cdn.jsdelivr.net/npm/lightstreamer-client-web@6.0.1/dist/lightstreamer.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Заполненность ёмкости для урины UPA [%]</h1>
+    <div id="value">Загрузка...</div>
+  </div>
+
+  <script>
+    // Инициализация Lightstreamer клиента.
+    var client = new LightstreamerClient("http://push.lightstreamer.com", "ISS");
+    client.connect();
+
+    // Создаём подписку на нужный параметр.
+    var subscription = new Subscription("MERGE", "ISS_MET", ["NODE3000005"], null);
+
+    subscription.addListener({
+      onItemUpdate: function(update) {
+        var value = update.getValue("NODE3000005");
+        document.getElementById("value").textContent = value;
+      },
+      onListenStart: function() {
+        console.log("Подписка началась");
+      },
+      onListenEnd: function() {
+        console.log("Подписка завершена");
+      }
+    });
+
+    client.subscribe(subscription);
+  </script>
+</body>
+</html>
