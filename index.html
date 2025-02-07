@@ -26,8 +26,8 @@
       color: #007BFF;
     }
   </style>
-  <!-- Обновлённая ссылка на Lightstreamer библиотеку -->
-  <script src="https://cdn.jsdelivr.net/npm/lightstreamer-client-web@6.0.1/dist/lightstreamer.min.js"></script>
+  <!-- Подключаем Lightstreamer через unpkg -->
+  <script src="https://unpkg.com/lightstreamer-client-web@6.0.1/lightstreamer.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -36,11 +36,11 @@
   </div>
 
   <script>
-    // Инициализация Lightstreamer клиента.
+    // Инициализация Lightstreamer клиента
     var client = new LightstreamerClient("http://push.lightstreamer.com", "ISS");
     client.connect();
 
-    // Создаём подписку на нужный параметр.
+    // Создание подписки на параметр NODE3000005
     var subscription = new Subscription("MERGE", "ISS_MET", ["NODE3000005"], null);
 
     subscription.addListener({
@@ -55,8 +55,8 @@
         console.log("Подписка завершена");
       }
     });
-    
 
+    // Подписываемся на обновления
     client.subscribe(subscription);
   </script>
 </body>
