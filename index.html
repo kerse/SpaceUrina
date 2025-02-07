@@ -26,8 +26,8 @@
       color: #007BFF;
     }
   </style>
-  <!-- Подключаем Lightstreamer через unpkg -->
-  <script src="https://unpkg.com/lightstreamer-client-web@6.0.1/lightstreamer.min.js"></script>
+  <!-- Подключаем Lightstreamer через официальный CDN -->
+  <script src="https://cdn.lightstreamer.com/lightstreamer-client-web/latest/LightstreamerClient.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -40,7 +40,7 @@
     var client = new LightstreamerClient("http://push.lightstreamer.com", "ISS");
     client.connect();
 
-    // Создание подписки на параметр NODE3000005
+    // Создание подписки на параметр NODE3000005 (заполненность ёмкости для урины)
     var subscription = new Subscription("MERGE", "ISS_MET", ["NODE3000005"], null);
 
     subscription.addListener({
