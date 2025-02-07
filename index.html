@@ -36,11 +36,10 @@
   </div>
 
   <script>
-    // Инициализация клиента Lightstreamer
-    var client = new LightstreamerClient("http://push.lightstreamer.com", "ISS");
+    // Используем защищённый URL для подключения: https:// вместо http://
+    var client = new LightstreamerClient("https://push.lightstreamer.com", "ISS");
     client.connect();
 
-    // Создание подписки на параметр NODE3000005
     var subscription = new Subscription("MERGE", "ISS_MET", ["NODE3000005"]);
 
     subscription.addListener({
@@ -56,7 +55,6 @@
       }
     });
 
-    // Подписываемся на обновления
     client.subscribe(subscription);
   </script>
 </body>
