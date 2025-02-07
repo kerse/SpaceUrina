@@ -36,15 +36,28 @@
   </div>
 
   <script>
-    // Используем защищённый URL для подключения: https:// вместо http://
-    var client = new LightstreamerClient("https://push.lightstreamer.com", "ISS");
+    // Используем защищённый протокол для подключения к Lightstreamer
+    var client = new LightstreamerClient("wss://push.lightstreamer.com", "ISS");
+
+    // Добавляем диагностические слушатели для клиента
+    client.addListener({
+      onStatusChange: function(status) {
+        console.log("Client status: " + status);
+      },
+      onServerError: function(code, message) {
+        console.error("Server error:", code, message);
+      }
+    });
+
     client.connect();
 
+    // Создаем подписку на параметр NODE3000005 (заполненность ёмкости для урины)
     var subscription = new Subscription("MERGE", "ISS_MET", ["NODE3000005"]);
 
     subscription.addListener({
       onItemUpdate: function(update) {
         var value = update.getValue("NODE3000005");
+        console.log("Получено обновление: " + value);
         document.getElementById("value").textContent = value + "%";
       },
       onListenStart: function() {
@@ -55,6 +68,7 @@
       }
     });
 
+    // Подписываемся на обновления
     client.subscribe(subscription);
   </script>
 </body>
